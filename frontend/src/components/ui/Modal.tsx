@@ -16,7 +16,6 @@ export default function Modal({ open, onClose, children, title }: ModalProps) {
     setMounted(true);
   }, []);
 
-  // Close on Escape and lock scroll while open
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {

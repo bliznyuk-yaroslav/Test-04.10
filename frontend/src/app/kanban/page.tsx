@@ -9,13 +9,12 @@ import {
   deleteTaskThunk,
 } from '../../store/slices/tasksSlice';
 import { Task } from '../../lib/api';
-import Modal from '../../components/ui/Modal';
 import DndBoard from '../../components/kanban/DndBoard';
 import FilterBar from '../../components/kanban/FilterBar';
 import AddTaskModal from '../../components/kanban/AddTaskModal';
 import type { RootState } from '../../store';
+import toast from "react-hot-toast";
 
-// Drag-and-drop UI handled by DndBoard component.
 
 export default function KanbanPage() {
   const router = useRouter();
@@ -30,29 +29,25 @@ export default function KanbanPage() {
       return;
     }
     dispatch(fetchTasks(filter === 'all' ? undefined : filter));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, filter]);
 
-  // Data grouping and DnD mapping is encapsulated inside DndBoard
+
 
   const [openAdd, setOpenAdd] = useState(false);
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
 
-  const create = (e: React.FormEvent) => {
-    e.preventDefault();
-    dispatch(createTaskThunk({ title, description: description || null, status: 'todo' }));
-    setOpenAdd(false);
-    setTitle('');
-    setDescription('');
-  };
+
 
   const setStatus = (t: Task, status: Task['status']) => {
     dispatch(updateTaskThunk({ id: t.id, data: { status } }));
   };
 
-  const remove = (t: Task) => {
-    dispatch(deleteTaskThunk(t.id));
+  const remove = async (t: Task) => {
+    try {
+      await dispatch(deleteTaskThunk(t.id)).unwrap();
+      toast.success('Task deleted successfully!');
+    } catch (e) {
+      toast.error('Failed to delete task');
+    }
   };
 
   const update = (t: Task, data: Partial<Pick<Task, 'title' | 'description' | 'status'>>) => {
@@ -96,7 +91,16 @@ export default function KanbanPage() {
       <AddTaskModal
         open={openAdd}
         onClose={() => setOpenAdd(false)}
-        onCreate={(t, d) => dispatch(createTaskThunk({ title: t, description: d, status: 'todo' }))}
+        onCreate={async (t, d) => {
+          try {
+            await dispatch(
+              createTaskThunk({ title: t, description: d, status: 'todo' })
+            ).unwrap();
+            toast.success('Task created successfully!');
+          } catch (e) {
+            toast.error('Failed to create task');
+          }
+        }}
       />
     </main>
   );
